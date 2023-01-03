@@ -1,0 +1,18 @@
+node {
+    def mavenHome=tool name :"maven3.8.6"
+    properties([[$class: 'JobLocalConfiguration', changeReasonComment: ''], pipelineTriggers([pollSCM('* * * * *')])])
+    stage('checkoutcode'){
+    git credentialsId: 'd6a33959-608f-4f05-8d5b-0700ebf49294', url: 'https://github.com/rajasekhar822/maven-web-application.git'
+    stage('build'){
+        sh "${mavenHome}/bin/mvn clean package"
+        stage('ExecuteSonarQubeReport'){
+        sh "${mavenHome}/bin/mvn clean sonar:sonar package"
+        stage('DeployIntoTomcatserver'){
+            sshagent(['0e78b53a-dad2-4f1c-a58c-cc23e1c3fdaf']) {
+                sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@172.31.32.151:/opt/apache-tomcat-9.0.69/webapps/"
+        }
+    }
+}
+}
+}
+}
